@@ -1,13 +1,13 @@
 // ---------- Contexts ------------
 
-import { auth } from "@/firebase";
-import { signOut } from "firebase/auth";
+import { auth, provider } from "@/firebase";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/components/authcontext";
 
 // ---------- Components ------------
 
 import { Button } from "@/components/ui/button";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogIn, LogOut, Moon, Sun } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "../themecontext";
@@ -16,12 +16,21 @@ import { useTheme } from "../themecontext";
 
 const NavbarLeftBlock = () => {
   const { user } = useAuth();
+  const handleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      console.error("Sign in error: ", error);
+    }
+  }
+
   const handleSignOut = () => { signOut(auth) }
 
   return (
     <div>
-      {/* Show user info if logged in */}
-      {user?.photoURL && user.displayName &&
+      {/* Show user info if logged in, else log in button */}
+      
+      {user?.photoURL && user.displayName ? (
         <div className="flex flex-row gap-3 items-center">
           <Avatar>
             <AvatarImage src={user.photoURL} />
@@ -49,7 +58,11 @@ const NavbarLeftBlock = () => {
             </TooltipContent>
           </Tooltip>
         </div>
-      }
+      ) : (
+        <Button onClick={() => handleSignIn()}>
+          <LogIn /> Sign In with Google
+        </Button>
+      )}
     </div>
   )
 }
@@ -61,12 +74,14 @@ const NavbarRightBlock = () => {
 
   return (
     <div className="flex flex-row flex-wrap gap-2">
+
       {/* Theme toggle */}
+      
       <Button
         variant="outline"
         size="icon"
         onClick={toggleTheme}
-      >
+        >
         {theme === "dark" ? <Moon /> : <Sun />}
       </Button>
     </div>

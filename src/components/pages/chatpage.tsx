@@ -22,6 +22,7 @@ import { Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
 
 const ChatMessage = ({msg} : {msg: any}) => {
   const { user } = useAuth();
+
   const deleteMessage = async (messageId: string) => {
     try {
       await deleteDoc(doc(db, "messages", messageId));
@@ -176,7 +177,7 @@ function ChatPage() {
           </CardTitle>
 
           <CardDescription>
-            Messages are stored unencrypted and anyone signed-in can view the chat history. Refrain from sharing any sensitive information.
+            Messages are stored unencrypted and anyone can view the chat history. Refrain from sharing any sensitive information.
           </CardDescription>
         </CardHeader>
 
@@ -188,7 +189,7 @@ function ChatPage() {
                 <Loader2 className="animate-spin"/>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {messages.map((m: any) => (
                   <ChatMessage msg={m} />
                 ))}
@@ -198,19 +199,24 @@ function ChatPage() {
             <div ref={bottomRef}></div>
           </ScrollArea>
 
-          {/* Input area */}
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Aa..."
-              value={message}
-              onChange={(e: any) => setMessage(e.target.value)}
-            />
+          {user? (
+            <form onSubmit={sendMessage} className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Aa..."
+                value={message}
+                onChange={(e: any) => setMessage(e.target.value)}
+              />
 
-            <Button type="submit" size="icon">
-              <Send />
-            </Button>
-          </form>
+              <Button type="submit" size="icon">
+                <Send />
+              </Button>
+            </form>
+            ) : (
+            <p className="text-sm text-muted-foreground text-center">
+              Sign in to send messages
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
