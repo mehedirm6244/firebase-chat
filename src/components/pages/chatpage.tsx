@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 // ------------ Context -------------
 
-import { db } from "@/firebase";
+import { auth, db } from "@/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "@/components/authcontext";
 import { doc, addDoc, deleteDoc, collection, query, orderBy, onSnapshot, serverTimestamp, } from "firebase/firestore";
 
@@ -141,27 +142,37 @@ function ChatPage() {
     setMessage("");
   };
 
-  // Load chat history in real-time
   useEffect(() => {
-    const q = query(
-      collection(db, "messages"),
-      orderBy("createdAt", "asc")
-    );
+    let unsubscribeMessages: any = null;
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs: any = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setLoading(false);
-      setMessages(msgs);
+    const unsubAuth = onAuthStateChanged(auth, () => {
+      // If any previous Firestore listener exists, remove it
+      if (unsubscribeMessages)
+        unsubscribeMessages();
+
+      const q = query(
+        collection(db, "messages"),
+        orderBy("createdAt", "asc")
+      );
+
+      unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        const msgs: any = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setLoading(false);
+        setMessages(msgs);
+      });
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubAuth();
+      if (unsubscribeMessages) unsubscribeMessages();
+    };
   }, []);
 
+  // Scroll to bottom when new message arrives
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
