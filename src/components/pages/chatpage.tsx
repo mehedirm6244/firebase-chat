@@ -111,7 +111,11 @@ const ChatMessage = ({msg} : {msg: ChatMessageType}) => {
         `}
         >
         <Tooltip>
-          <TooltipTrigger>{msg.text}</TooltipTrigger>
+          <TooltipTrigger>
+            <p className="text-left">
+              {msg.text}
+            </p>
+          </TooltipTrigger>
 
           <TooltipContent>
             {msg.createdAt != null &&
@@ -134,7 +138,8 @@ const ChatMessage = ({msg} : {msg: ChatMessageType}) => {
             <Button
               size="icon"
               variant="ghost"
-              className="opacity-0 group-hover:opacity-100"
+              className="opacity-0 pointer-events-none group-hover:opacity-100
+                group-hover:pointer-events-auto"
               >
               <Trash2 className="text-destructive"/>
             </Button>
@@ -142,7 +147,11 @@ const ChatMessage = ({msg} : {msg: ChatMessageType}) => {
 
           <AlertDialogContent>
             <AlertDialogHeader>Delete for Everyone?</AlertDialogHeader>
-            <AlertDialogDescription>{msg.text}</AlertDialogDescription>
+            <AlertDialogDescription>
+              <p className="break-words break-all">
+                {msg.text}
+              </p>
+            </AlertDialogDescription>
 
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
