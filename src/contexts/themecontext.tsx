@@ -6,16 +6,17 @@ import {
   type ReactNode
 } from "react";
 
+
 type Theme = "light" | "dark";
 
-interface ThemeContextType {
+type ThemeContextType = {
   theme: Theme,
   toggleTheme: () => void,
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider = ({children} : {children: ReactNode}) => {
+const ThemeProvider = ({children} : {children: ReactNode}) => {
   const [theme, setTheme] = useState<Theme>(
     (localStorage.getItem("theme") as Theme) || "light"
   );
@@ -35,9 +36,12 @@ export const ThemeProvider = ({children} : {children: ReactNode}) => {
   );
 };
 
-export const useTheme = () => {
+const useTheme = () => {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
+  if (!ctx)
+    throw new Error("useTheme must be used inside ThemeProvider");
+  
   return ctx;
 };
 
+export { ThemeProvider, useTheme };

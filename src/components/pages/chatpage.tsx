@@ -1,34 +1,72 @@
 import { useState, useEffect, useRef } from "react";
-
-// ------------ Context -------------
-
-import { auth, db } from "@/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useAuth } from "@/components/authcontext";
-import { doc, addDoc, deleteDoc, collection, query, orderBy, onSnapshot, serverTimestamp, } from "firebase/firestore";
-
-// ----------- Components -----------
+import { db } from "@/firebase";
+import { useAuth } from "@/contexts/authcontext";
+import {
+  doc,
+  addDoc,
+  deleteDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+} from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTrigger, AlertDialogCancel } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription
+} from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger
+} from "@/components/ui/hover-card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTrigger,
+  AlertDialogCancel
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+
 import { Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
+
 
 // --------- Chat Message -----------
 
-const ChatMessage = ({msg} : {msg: any}) => {
+type ChatMessageType = {
+  author: string,
+  createdAt: any,
+  mail: string,
+  pfp: string,
+  text: string,
+  uid: string,
+  id: string,
+};
+
+const ChatMessage = ({msg} : {msg: ChatMessageType}) => {
   const { user } = useAuth();
 
   const deleteMessage = async (messageId: string) => {
     try {
       await deleteDoc(doc(db, "messages", messageId));
-    } catch (err: any) {
-      console.log("Deletion failed: ", err);
+    } catch (error: any) {
+      console.log("Deletion failed: ", error);
     }
   }
 
@@ -64,10 +102,11 @@ const ChatMessage = ({msg} : {msg: any}) => {
       </HoverCardContent>
     </HoverCard>
 
-      {/* Message box */}
+      {/* Message */}
       <div
         className={`
-          mt-0.5 break-words break-all whitespace-pre-wrap bg-muted px-3 py-2 rounded-lg text-sm max-w-[80%]
+          mt-0.5 break-words break-all whitespace-pre-wrap bg-muted
+          px-3 py-2 rounded-lg text-sm max-w-[80%]
           ${msg.uid === user?.uid? 'rounded-tr-none' : 'rounded-tl-none'}
         `}
         >
@@ -107,7 +146,9 @@ const ChatMessage = ({msg} : {msg: any}) => {
 
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteMessage(msg.id)}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={() => deleteMessage(msg.id)}>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -122,7 +163,7 @@ function ChatPage() {
   const { user } = useAuth();
 
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loading, setLoading] = useState(true);
 
   const sendMessage = async (e: any) => {
@@ -143,32 +184,20 @@ function ChatPage() {
   };
 
   useEffect(() => {
-    let unsubscribeMessages: any = null;
+    const q = query(
+      collection(db, "messages"),
+      orderBy("createdAt", "asc")
+    );
 
-    const unsubAuth = onAuthStateChanged(auth, () => {
-      // If any previous Firestore listener exists, remove it
-      if (unsubscribeMessages)
-        unsubscribeMessages();
-
-      const q = query(
-        collection(db, "messages"),
-        orderBy("createdAt", "asc")
-      );
-
-      unsubscribeMessages = onSnapshot(q, (snapshot) => {
-        const msgs: any = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setLoading(false);
-        setMessages(msgs);
-      });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: any = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setLoading(false);
+      setMessages(msgs);
     });
-
-    return () => {
-      unsubAuth();
-      if (unsubscribeMessages) unsubscribeMessages();
-    };
+    return () => unsubscribe();
   }, []);
 
   // Scroll to bottom when new message arrives
@@ -178,17 +207,23 @@ function ChatPage() {
   }, [messages]);
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] flex align-middle items-center justify-center">
+    <div
+      className="min-h-[calc(100vh-5rem)] flex align-middle
+        items-center justify-center"
+      >
 
       {/* Chat window */}
       <Card className="sm:w-xl">
         <CardHeader>
-          <CardTitle className="flex flex-row gap-1.5 items-center align-middle">
+          <CardTitle
+            className="flex flex-row gap-1.5 items-center align-middle"
+            >
             <MessageCircle size={18} className="-mt-0.5"/> <p>Firebase Chat</p>
           </CardTitle>
 
           <CardDescription>
-            Messages are stored unencrypted and anyone can view the chat history. Refrain from sharing any sensitive information.
+            Messages are stored unencrypted and anyone can view the chat history.
+            Refrain from sharing any sensitive information.
           </CardDescription>
         </CardHeader>
 
@@ -196,7 +231,7 @@ function ChatPage() {
         <CardContent>
           <ScrollArea className="h-96 w-full rounded-md border p-4 mb-4">
             {loading ? (
-              <div className="p-4 mx-auto flex flex-col items-center justify-center">
+              <div className="p-4 mx-auto flex items-center justify-center">
                 <Loader2 className="animate-spin"/>
               </div>
             ) : (
